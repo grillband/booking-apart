@@ -21,6 +21,7 @@ export interface CreateBookingPayload {
   guests: number;
   name: string;
   email: string;
+  totalPrice?: number;
 }
 
 const MOCK_ROOMS: ChannelRoom[] = [
@@ -78,15 +79,30 @@ export async function fetchRoomsFromChannelManager(): Promise<ChannelRoom[]> {
 
 export async function createBookingInChannelManager(
   payload: CreateBookingPayload
-): Promise<{ confirmationCode: string }> {
+): Promise<{ confirmationCode: string; totalPrice: number }> {
   // TODO: Replace with SmartOrder booking API call.
   // Example:
   // const res = await fetch("https://api.smartorder.example/bookings", { ... });
   // if (!res.ok) throw new Error("Failed to create booking");
   // const data = await res.json();
-  // return { confirmationCode: data.code };
+  // return { confirmationCode: data.code, totalPrice: data.totalPrice };
+
+  // Calculate price dynamically
+  const room = MOCK_ROOMS.find(r => r.id === payload.roomId);
+  if (!room) throw new Error("Room not found");
+
+  const checkIn = new Date(payload.checkIn);
+  const checkOut = new Date(payload.checkOut);
+  const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+  const calculatedPrice = room.pricePerNight * nights;
+
+  // If totalPrice is provided, validate it matches
+  if (payload.totalPrice !== undefined && payload.totalPrice !== calculatedPrice) {
+    throw new Error("Price mismatch");
+  }
+
   await new Promise((resolve) => setTimeout(resolve, 300));
-  return { confirmationCode: "CS" + Math.random().toString(36).slice(2, 7).toUpperCase() };
+  return { confirmationCode: "CS" + Math.random().toString(36).slice(2, 7).toUpperCase(), totalPrice: calculatedPrice };
 }
 
 export async function completeOnlineCheckIn(

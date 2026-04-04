@@ -37,6 +37,15 @@ export function BookingPanel({
   const minCheckIn = today;
   const minCheckOut = checkIn ? addDays(checkIn, 1) : addDays(today, 1);
 
+  const { nights, totalPrice } = useMemo(() => {
+    if (!checkIn || !checkOut || !selectedRoom) return { nights: 0, totalPrice: 0 };
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    const calculatedNights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
+    const calculatedTotal = selectedRoom.pricePerNight * calculatedNights;
+    return { nights: calculatedNights, totalPrice: calculatedTotal };
+  }, [checkIn, checkOut, selectedRoom]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedRoom) {
@@ -56,7 +65,8 @@ export function BookingPanel({
           checkOut,
           guests,
           email,
-          name
+          name,
+          totalPrice
         })
       });
       const data = await res.json();
@@ -64,7 +74,7 @@ export function BookingPanel({
         throw new Error(data.error || "Unable to complete booking.");
       }
       setMessage(
-        `Booking confirmed. Your confirmation code is ${data.confirmationCode}.`
+        `Booking confirmed for ${selectedRoom.currency} ${data.totalPrice.toFixed(0)}. Your confirmation code is ${data.confirmationCode}.`
       );
       setCheckIn("");
       setCheckOut("");
@@ -205,6 +215,18 @@ export function BookingPanel({
         </div>
         {message && (
           <p className="text-xs sm:text-sm text-emerald-300 mt-1">{message}</p>
+        )}
+        {totalPrice > 0 && (
+          <div className="bg-slate-800/60 rounded-lg p-3 border border-white/10">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-slate-300">
+                {nights} night{nights !== 1 ? 's' : ''} × {selectedRoom.currency} {selectedRoom.pricePerNight.toFixed(0)}/night
+              </span>
+              <span className="font-semibold text-white">
+                Total: {selectedRoom.currency} {totalPrice.toFixed(0)}
+              </span>
+            </div>
+          </div>
         )}
         <button
           type="submit"

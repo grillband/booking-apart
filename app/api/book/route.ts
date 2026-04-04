@@ -23,7 +23,7 @@ export async function POST(request: Request) {
 
     const booking = await createBookingInChannelManager(body as CreateBookingPayload);
 
-    return NextResponse.json({ confirmationCode: booking.confirmationCode });
+    return NextResponse.json({ confirmationCode: booking.confirmationCode, totalPrice: booking.totalPrice });
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || "Unable to complete booking." },
