@@ -77,6 +77,47 @@ export async function fetchRoomsFromChannelManager(): Promise<ChannelRoom[]> {
   return MOCK_ROOMS;
 }
 
+export async function getRoomPricing(roomId: string, checkIn: string, checkOut: string): Promise<{ pricePerNight: number; totalPrice: number; currency: string }> {
+  // TODO: Replace with SmartOrder pricing API call.
+  // Example:
+  // const res = await fetch(`https://api.smartorder.example/rooms/${roomId}/pricing?checkIn=${checkIn}&checkOut=${checkOut}`);
+  // if (!res.ok) throw new Error("Failed to fetch pricing");
+  // return res.json();
+
+  // Simulate dynamic pricing based on dates
+  const room = MOCK_ROOMS.find(r => r.id === roomId);
+  if (!room) throw new Error("Room not found");
+
+  const checkInDate = new Date(checkIn);
+  const checkOutDate = new Date(checkOut);
+  const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Dynamic pricing logic: weekends are 20% more expensive, peak season (summer) 15% more
+  let basePrice = room.pricePerNight;
+  const dayOfWeek = checkInDate.getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) { // Weekend
+    basePrice *= 1.2;
+  }
+  const month = checkInDate.getMonth();
+  if (month >= 5 && month <= 8) { // Summer months
+    basePrice *= 1.15;
+  }
+
+  // Add some randomness for demand-based pricing
+  const demandMultiplier = 0.9 + Math.random() * 0.2; // 0.9 to 1.1
+  basePrice *= demandMultiplier;
+
+  const totalPrice = Math.round(basePrice * nights);
+
+  await new Promise((resolve) => setTimeout(resolve, 150)); // Simulate API delay
+
+  return {
+    pricePerNight: Math.round(basePrice),
+    totalPrice,
+    currency: room.currency
+  };
+}
+
 export async function createBookingInChannelManager(
   payload: CreateBookingPayload
 ): Promise<{ confirmationCode: string; totalPrice: number }> {
@@ -87,22 +128,16 @@ export async function createBookingInChannelManager(
   // const data = await res.json();
   // return { confirmationCode: data.code, totalPrice: data.totalPrice };
 
-  // Calculate price dynamically
-  const room = MOCK_ROOMS.find(r => r.id === payload.roomId);
-  if (!room) throw new Error("Room not found");
-
-  const checkIn = new Date(payload.checkIn);
-  const checkOut = new Date(payload.checkOut);
-  const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-  const calculatedPrice = room.pricePerNight * nights;
+  // Get dynamic pricing from channel manager
+  const pricing = await getRoomPricing(payload.roomId, payload.checkIn, payload.checkOut);
 
   // If totalPrice is provided, validate it matches
-  if (payload.totalPrice !== undefined && payload.totalPrice !== calculatedPrice) {
-    throw new Error("Price mismatch");
+  if (payload.totalPrice !== undefined && payload.totalPrice !== pricing.totalPrice) {
+    throw new Error("Price mismatch - please refresh and try again");
   }
 
   await new Promise((resolve) => setTimeout(resolve, 300));
-  return { confirmationCode: "CS" + Math.random().toString(36).slice(2, 7).toUpperCase(), totalPrice: calculatedPrice };
+  return { confirmationCode: "CS" + Math.random().toString(36).slice(2, 7).toUpperCase(), totalPrice: pricing.totalPrice };
 }
 
 export async function completeOnlineCheckIn(

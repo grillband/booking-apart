@@ -33,18 +33,36 @@ export function BookingPanel({
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [pricing, setPricing] = useState<{ pricePerNight: number; totalPrice: number; currency: string } | null>(null);
+  const [pricingLoading, setPricingLoading] = useState(false);
 
   const minCheckIn = today;
   const minCheckOut = checkIn ? addDays(checkIn, 1) : addDays(today, 1);
 
-  const { nights, totalPrice } = useMemo(() => {
-    if (!checkIn || !checkOut || !selectedRoom) return { nights: 0, totalPrice: 0 };
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
-    const calculatedNights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
-    const calculatedTotal = selectedRoom.pricePerNight * calculatedNights;
-    return { nights: calculatedNights, totalPrice: calculatedTotal };
-  }, [checkIn, checkOut, selectedRoom]);
+  // Fetch dynamic pricing from channel manager
+  React.useEffect(() => {
+    async function fetchPricing() {
+      if (!selectedRoom || !checkIn || !checkOut) {
+        setPricing(null);
+        return;
+      }
+
+      setPricingLoading(true);
+      try {
+        const res = await fetch(`/api/pricing?roomId=${selectedRoom.id}&checkIn=${checkIn}&checkOut=${checkOut}`);
+        if (!res.ok) throw new Error("Failed to fetch pricing");
+        const data = await res.json();
+        setPricing(data);
+      } catch (error) {
+        console.error("Pricing fetch error:", error);
+        setPricing(null);
+      } finally {
+        setPricingLoading(false);
+      }
+    }
+
+    fetchPricing();
+  }, [selectedRoom, checkIn, checkOut]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -66,7 +84,7 @@ export function BookingPanel({
           guests,
           email,
           name,
-          totalPrice
+          totalPrice: pricing?.totalPrice
         })
       });
       const data = await res.json();
@@ -74,7 +92,7 @@ export function BookingPanel({
         throw new Error(data.error || "Unable to complete booking.");
       }
       setMessage(
-        `Booking confirmed for ${selectedRoom.currency} ${data.totalPrice.toFixed(0)}. Your confirmation code is ${data.confirmationCode}.`
+        `Booking confirmed for ${pricing?.currency} ${data.totalPrice.toFixed(0)}. Your confirmation code is ${data.confirmationCode}.`
       );
       setCheckIn("");
       setCheckOut("");
@@ -216,24 +234,29 @@ export function BookingPanel({
         {message && (
           <p className="text-xs sm:text-sm text-emerald-300 mt-1">{message}</p>
         )}
-        {totalPrice > 0 && (
+        {pricing && (
           <div className="bg-slate-800/60 rounded-lg p-3 border border-white/10">
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-300">
-                {nights} night{nights !== 1 ? 's' : ''} × {selectedRoom.currency} {selectedRoom.pricePerNight.toFixed(0)}/night
+                {pricingLoading ? "Calculating..." : `Dynamic pricing from channel manager`}
               </span>
               <span className="font-semibold text-white">
-                Total: {selectedRoom.currency} {totalPrice.toFixed(0)}
+                Total: {pricing.currency} {pricing.totalPrice.toFixed(0)}
               </span>
             </div>
+            {!pricingLoading && (
+              <div className="text-xs text-slate-400 mt-1">
+                {pricing.currency} {pricing.pricePerNight.toFixed(0)}/night × {Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24))} nights
+              </div>
+            )}
           </div>
         )}
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !pricing || pricingLoading}
           className="w-full inline-flex justify-center items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/40 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary focus-visible:ring-offset-slate-950 transition-colors mt-2"
         >
-          {isSubmitting ? "Processing..." : "Confirm booking"}
+          {isSubmitting ? "Processing..." : pricingLoading ? "Getting price..." : "Confirm booking"}
         </button>
       </form>
     </section>
