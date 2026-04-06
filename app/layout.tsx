@@ -18,7 +18,9 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
       </head>
       <body className="min-h-screen text-gray-900">
-        <div className="mesh-bg" aria-hidden="true" />
+        <div className="mesh-bg" aria-hidden="true">
+          <span className="mesh-blob-3" />
+        </div>
         <div className="min-h-screen flex flex-col relative">
           <Header />
           <main className="flex-1">{children}</main>

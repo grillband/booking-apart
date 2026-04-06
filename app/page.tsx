@@ -1,11 +1,54 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RoomCard, type Room } from "@/components/RoomCard";
 import { BookingPanel } from "@/components/BookingPanel";
 import { RoomGalleryModal } from "@/components/RoomGalleryModal";
 import { getCurrencyFromLocale } from "@/lib/currency";
 import { useScrollReveal } from "@/lib/useScrollReveal";
+
+/* ─── Animated counter ─── */
+function AnimatedStat({ value, suffix = "" }: { value: string; suffix?: string }) {
+  const num = parseFloat(value);
+  const isNumber = !isNaN(num);
+  const [display, setDisplay] = useState(isNumber ? "0" : value);
+  const ref = useRef<HTMLElement>(null);
+  const animated = useRef(false);
+
+  const animate = useCallback(() => {
+    if (animated.current || !isNumber) return;
+    animated.current = true;
+    const duration = 1200;
+    const start = performance.now();
+    const isDecimal = value.includes(".");
+    function tick(now: number) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      const current = num * eased;
+      setDisplay(isDecimal ? current.toFixed(1) : String(Math.round(current)));
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }, [num, isNumber, value]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { animate(); io.disconnect(); } },
+      { threshold: 0.5 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [animate]);
+
+  return (
+    <dd ref={ref} className="text-2xl font-semibold text-gray-800 tabular-nums">
+      {isNumber ? display : value}{suffix}
+    </dd>
+  );
+}
 
 const TABS = [
   {
@@ -116,7 +159,7 @@ export default function HomePage() {
       <section className="relative isolate overflow-hidden">
         {/* Background image */}
         <div
-          className="absolute inset-0 -z-10 bg-cover bg-center"
+          className="absolute inset-0 -z-10 bg-cover bg-center hero-bg-animate"
           style={{
             backgroundImage:
               "url('https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1600')",
@@ -155,17 +198,17 @@ export default function HomePage() {
           <div className="mt-16 glass rounded-2xl px-8 py-5 inline-flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
             <dl className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm text-gray-400">
               <div className="text-center">
-                <dd className="text-2xl font-semibold text-gray-800">4.8</dd>
+                <AnimatedStat value="4.8" />
                 <dt className="mt-1 text-xs uppercase tracking-wider">Guest rating</dt>
               </div>
               <div className="hidden sm:block h-8 w-px" style={{ background: 'rgba(0,0,0,0.08)' }} />
               <div className="text-center">
-                <dd className="text-2xl font-semibold text-gray-800">2</dd>
+                <AnimatedStat value="2" />
                 <dt className="mt-1 text-xs uppercase tracking-wider">Properties</dt>
               </div>
               <div className="hidden sm:block h-8 w-px" style={{ background: 'rgba(0,0,0,0.08)' }} />
               <div className="text-center">
-                <dd className="text-2xl font-semibold text-gray-800">24/7</dd>
+                <AnimatedStat value="24/7" />
                 <dt className="mt-1 text-xs uppercase tracking-wider">Support</dt>
               </div>
             </dl>
@@ -273,12 +316,12 @@ export default function HomePage() {
           </div>
 
           {/* Active tab content */}
-          <div className="grid gap-8 md:grid-cols-2 items-center">
+          <div key={activeTab} className="grid gap-8 md:grid-cols-2 items-center animate-tab-fade">
             <div className="overflow-hidden rounded-2xl" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.4)' }}>
               <img
                 src={TABS[activeTab].image}
                 alt={TABS[activeTab].label}
-                className="w-full h-64 sm:h-80 object-cover"
+                className="w-full h-64 sm:h-80 object-cover transition-transform duration-700 hover:scale-105"
               />
             </div>
             <div className="space-y-4">
@@ -290,9 +333,9 @@ export default function HomePage() {
               </p>
               <a
                 href="#booking"
-                className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent-light transition-colors"
+                className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent-light transition-colors group"
               >
-                Book now <span aria-hidden="true">→</span>
+                Book now <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
               </a>
             </div>
           </div>
@@ -315,13 +358,13 @@ export default function HomePage() {
             {TESTIMONIALS.map((t) => (
               <div
                 key={t.name}
-                className="glass rounded-2xl p-6 flex flex-col"
+                className="glass rounded-2xl p-6 flex flex-col star-animate"
               >
                 <div className="flex gap-1 text-accent mb-4">
                   {Array.from({ length: t.rating }).map((_, i) => (
                     <svg
                       key={i}
-                      className="h-4 w-4 fill-current"
+                      className="h-4 w-4 fill-current star-icon"
                       viewBox="0 0 20 20"
                     >
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
