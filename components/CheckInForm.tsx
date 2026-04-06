@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 export function CheckInForm() {
-  const [code, setCode] = useState("");
+  const [reservationId, setReservationId] = useState("");
   const [lastName, setLastName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -14,18 +14,21 @@ export function CheckInForm() {
       const res = await fetch("/api/check-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirmationCode: code, lastName })
+        body: JSON.stringify({ reservationId, lastName })
       });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || "Unable to complete online check-in.");
       }
-      setStatus(
-        `Welcome ${data.guestName}. Your room ${
-          data.roomName
-        } is ready. Door code: ${data.doorCode || "will be sent by email"}.`
-      );
-      setCode("");
+      const lines = [
+        `Welcome ${data.guestName}!`,
+        `Room: ${data.roomName}`,
+        `Check-in: ${data.checkIn}  ·  Check-out: ${data.checkOut}`,
+        `Status: ${data.status}`,
+        `Door code: ${data.doorCode || "will be sent by email"}`,
+      ];
+      setStatus(lines.join("\n"));
+      setReservationId("");
       setLastName("");
     } catch (error: any) {
       setStatus(error.message || "Something went wrong.");
@@ -34,54 +37,56 @@ export function CheckInForm() {
     }
   }
 
+  const inputClass = "glass-input";
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-6 bg-white/50 backdrop-blur-2xl rounded-2xl shadow-glass border border-white/60 p-4 sm:p-6 max-w-lg w-full"
+      className="mt-6 glass rounded-2xl p-5 sm:p-7 max-w-lg w-full"
     >
-      <h2 className="text-base sm:text-lg font-semibold text-slate-900">
+      <h2 className="text-base sm:text-lg font-semibold text-gray-800">
         Online check-in
       </h2>
-      <p className="mt-1 text-xs sm:text-sm text-slate-600">
-        Use your booking confirmation code to check in before arrival.
+      <p className="mt-1 text-xs sm:text-sm text-gray-500">
+        Use your reservation ID to check in before arrival.
       </p>
-      <div className="mt-4 space-y-3 text-sm">
+      <div className="mt-5 space-y-4 text-sm">
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">
-            Confirmation code
+          <label className="block text-xs font-medium text-gray-500 mb-1.5">
+            Reservation ID
           </label>
           <input
             type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            className="w-full rounded-xl border border-slate-200/80 bg-white/60 backdrop-blur-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400 tracking-[0.2em] uppercase"
-            placeholder="e.g. CS7F92"
+            value={reservationId}
+            onChange={(e) => setReservationId(e.target.value)}
+            className={inputClass}
+            placeholder="e.g. RES-12345"
             required
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">
+          <label className="block text-xs font-medium text-gray-500 mb-1.5">
             Last name
           </label>
           <input
             type="text"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="w-full rounded-xl border border-slate-200/80 bg-white/60 backdrop-blur-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+            className={inputClass}
             required
           />
         </div>
         {status && (
-          <p className="text-xs sm:text-sm text-primary mt-1 whitespace-pre-line">
+          <p className="text-xs sm:text-sm text-accent mt-1 whitespace-pre-line">
             {status}
           </p>
         )}
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full inline-flex justify-center items-center rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:from-sky-400 hover:to-indigo-400 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-400 transition-colors mt-1"
+          className="w-full glass-btn px-4 py-3 text-sm mt-1"
         >
-          {isSubmitting ? "Checking in..." : "Check in now"}
+          {isSubmitting ? "Checking in…" : "Check in now"}
         </button>
       </div>
     </form>

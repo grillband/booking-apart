@@ -1,32 +1,70 @@
-// Approximate exchange rates from IDR to other currencies.
-// In production, replace with a live API like exchangerate-api.com
-const RATES_FROM_IDR: Record<string, number> = {
+// Currency conversion from IDR base.
+// Set EXCHANGE_RATE_API_KEY in .env.local to use live rates from exchangerate-api.com.
+// Without the key, hardcoded approximate rates are used as fallback.
+
+// ─── Hardcoded fallback rates (IDR → X) ─────────────────────────────────────
+const FALLBACK_RATES: Record<string, number> = {
   IDR: 1,
-  USD: 0.0000625,   // 1 IDR ≈ 0.0000625 USD (1 USD ≈ 16,000 IDR)
-  EUR: 0.0000575,   // 1 IDR ≈ 0.0000575 EUR
-  GBP: 0.0000495,   // 1 IDR ≈ 0.0000495 GBP
-  JPY: 0.00938,     // 1 IDR ≈ 0.00938 JPY
-  KRW: 0.0856,      // 1 IDR ≈ 0.0856 KRW
-  SGD: 0.0000838,   // 1 IDR ≈ 0.0000838 SGD
-  MYR: 0.000281,    // 1 IDR ≈ 0.000281 MYR
-  THB: 0.00219,     // 1 IDR ≈ 0.00219 THB
-  AUD: 0.0000969,   // 1 IDR ≈ 0.0000969 AUD
-  CNY: 0.000456,    // 1 IDR ≈ 0.000456 CNY
-  INR: 0.00528,     // 1 IDR ≈ 0.00528 INR
-  PHP: 0.00356,     // 1 IDR ≈ 0.00356 PHP
-  VND: 1.59,        // 1 IDR ≈ 1.59 VND
-  CAD: 0.0000875,   // 1 IDR ≈ 0.0000875 CAD
-  CHF: 0.0000556,   // 1 IDR ≈ 0.0000556 CHF
-  HKD: 0.000488,    // 1 IDR ≈ 0.000488 HKD
-  TWD: 0.00203,     // 1 IDR ≈ 0.00203 TWD
-  AED: 0.000230,    // 1 IDR ≈ 0.000230 AED
-  SAR: 0.000234,    // 1 IDR ≈ 0.000234 SAR
-  BRL: 0.000356,    // 1 IDR ≈ 0.000356 BRL
-  RUB: 0.00575,     // 1 IDR ≈ 0.00575 RUB
-  NZD: 0.000106,    // 1 IDR ≈ 0.000106 NZD
+  USD: 0.0000625,
+  EUR: 0.0000575,
+  GBP: 0.0000495,
+  JPY: 0.00938,
+  KRW: 0.0856,
+  SGD: 0.0000838,
+  MYR: 0.000281,
+  THB: 0.00219,
+  AUD: 0.0000969,
+  CNY: 0.000456,
+  INR: 0.00528,
+  PHP: 0.00356,
+  VND: 1.59,
+  CAD: 0.0000875,
+  CHF: 0.0000556,
+  HKD: 0.000488,
+  TWD: 0.00203,
+  AED: 0.000230,
+  SAR: 0.000234,
+  BRL: 0.000356,
+  RUB: 0.00575,
+  NZD: 0.000106,
 };
 
-// Maps browser locale to currency code
+// ─── Live rate cache (server-side only) ──────────────────────────────────────
+let cachedLiveRates: Record<string, number> | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+async function fetchLiveRates(): Promise<Record<string, number> | null> {
+  const apiKey = process.env.EXCHANGE_RATE_API_KEY;
+  if (!apiKey) return null;
+
+  // Return cached rates if still fresh
+  if (cachedLiveRates && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
+    return cachedLiveRates;
+  }
+
+  try {
+    const res = await fetch(
+      `https://v6.exchangerate-api.com/v6/${encodeURIComponent(apiKey)}/latest/IDR`
+    );
+    if (!res.ok) {
+      console.error(`Exchange rate API error: ${res.status}`);
+      return null;
+    }
+    const data = await res.json();
+    if (data.result === "success" && data.conversion_rates) {
+      cachedLiveRates = data.conversion_rates as Record<string, number>;
+      cacheTimestamp = Date.now();
+      return cachedLiveRates;
+    }
+    return null;
+  } catch (err) {
+    console.error("Failed to fetch live exchange rates:", err);
+    return null;
+  }
+}
+
+// ─── Locale → currency mapping ──────────────────────────────────────────────
 const LOCALE_CURRENCY_MAP: Record<string, string> = {
   en_US: "USD", en_GB: "GBP", en_AU: "AUD", en_CA: "CAD", en_NZ: "NZD",
   en_SG: "SGD", en_HK: "HKD", en_PH: "PHP", en_IN: "INR",
@@ -49,29 +87,41 @@ const LOCALE_CURRENCY_MAP: Record<string, string> = {
   fil: "PHP", fil_PH: "PHP",
 };
 
+// ─── Public API ─────────────────────────────────────────────────────────────
+
 export function getCurrencyFromLocale(locale: string): string {
-  // Normalize: "en-US" → "en_US"
   const normalized = locale.replace("-", "_");
   if (LOCALE_CURRENCY_MAP[normalized]) return LOCALE_CURRENCY_MAP[normalized];
-  // Try language-only fallback: "en_US" → "en"
   const lang = normalized.split("_")[0];
   if (LOCALE_CURRENCY_MAP[lang]) return LOCALE_CURRENCY_MAP[lang];
-  return "USD"; // default fallback
+  return "USD";
 }
 
-export function convertFromIDR(amountIDR: number, targetCurrency: string): number {
-  const rate = RATES_FROM_IDR[targetCurrency];
-  if (!rate) return amountIDR; // Unknown currency, return as-is
-  return amountIDR * rate;
+export async function convertFromIDR(
+  amountIDR: number,
+  targetCurrency: string
+): Promise<number> {
+  if (targetCurrency === "IDR") return amountIDR;
+
+  // Only allow known currencies
+  if (!FALLBACK_RATES[targetCurrency]) return amountIDR;
+
+  // Try live rates first
+  const live = await fetchLiveRates();
+  if (live && live[targetCurrency]) {
+    return amountIDR * live[targetCurrency];
+  }
+
+  // Fallback to hardcoded
+  return amountIDR * FALLBACK_RATES[targetCurrency];
 }
 
 export function formatPrice(amount: number, currency: string): string {
-  // For currencies with large values (IDR, VND, KRW, JPY), show no decimals
   const noDecimalCurrencies = ["IDR", "VND", "KRW", "JPY", "CLP", "HUF"];
   const decimals = noDecimalCurrencies.includes(currency) ? 0 : 2;
   return amount.toFixed(decimals);
 }
 
 export function getSupportedCurrencies(): string[] {
-  return Object.keys(RATES_FROM_IDR);
+  return Object.keys(FALLBACK_RATES);
 }

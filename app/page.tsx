@@ -1,10 +1,110 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RoomCard, type Room } from "@/components/RoomCard";
 import { BookingPanel } from "@/components/BookingPanel";
 import { RoomGalleryModal } from "@/components/RoomGalleryModal";
 import { getCurrencyFromLocale } from "@/lib/currency";
+import { useScrollReveal } from "@/lib/useScrollReveal";
+
+/* ─── Animated counter ─── */
+function AnimatedStat({ value, suffix = "" }: { value: string; suffix?: string }) {
+  const num = parseFloat(value);
+  const isNumber = !isNaN(num);
+  const [display, setDisplay] = useState(isNumber ? "0" : value);
+  const ref = useRef<HTMLElement>(null);
+  const animated = useRef(false);
+
+  const animate = useCallback(() => {
+    if (animated.current || !isNumber) return;
+    animated.current = true;
+    const duration = 1200;
+    const start = performance.now();
+    const isDecimal = value.includes(".");
+    function tick(now: number) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      const current = num * eased;
+      setDisplay(isDecimal ? current.toFixed(1) : String(Math.round(current)));
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }, [num, isNumber, value]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { animate(); io.disconnect(); } },
+      { threshold: 0.5 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [animate]);
+
+  return (
+    <dd ref={ref} className="text-2xl font-semibold text-gray-800 tabular-nums">
+      {isNumber ? display : value}{suffix}
+    </dd>
+  );
+}
+
+const TABS = [
+  {
+    label: "An inviting escape",
+    title: "Your home away from home",
+    description:
+      "Step into a space designed for comfort and relaxation. Every apartment features premium furnishings, soft lighting and curated interiors that feel warm from the moment you arrive.",
+    image:
+      "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800",
+  },
+  {
+    label: "Prime neighbourhoods",
+    title: "Stay where it matters",
+    description:
+      "Our properties are located in the most sought-after neighbourhoods — close to dining, transport, shops and cultural attractions. Walk out the door and the city is at your feet.",
+    image:
+      "https://images.pexels.com/photos/3935320/pexels-photo-3935320.jpeg?auto=compress&cs=tinysrgb&w=800",
+  },
+  {
+    label: "Service excellence",
+    title: "Hotel-grade hospitality",
+    description:
+      "From weekly housekeeping to 24/7 support, we bring the best of hotel service to your apartment stay. Premium linens, toiletries and a welcome package await every guest.",
+    image:
+      "https://images.pexels.com/photos/6585598/pexels-photo-6585598.jpeg?auto=compress&cs=tinysrgb&w=800",
+  },
+  {
+    label: "Tech-enhanced stays",
+    title: "Smart, seamless and secure",
+    description:
+      "Self check-in with smart locks, high-speed Wi-Fi, streaming-ready TV and a digital concierge. Everything is designed so you spend less time figuring things out and more time enjoying your stay.",
+    image:
+      "https://images.pexels.com/photos/4050320/pexels-photo-4050320.jpeg?auto=compress&cs=tinysrgb&w=800",
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    name: "Sarah M.",
+    location: "United Kingdom",
+    text: "Absolutely stunning apartment with everything we needed. The self check-in was seamless and the location was perfect for exploring the city.",
+    rating: 5,
+  },
+  {
+    name: "James T.",
+    location: "Australia",
+    text: "Felt like a five-star hotel but with the privacy and space of our own apartment. The kitchen was a game-changer for our longer stay.",
+    rating: 5,
+  },
+  {
+    name: "Yuki K.",
+    location: "Japan",
+    text: "Beautiful interiors and incredibly responsive support team. Will definitely book again on our next trip.",
+    rating: 5,
+  },
+];
 
 export default function HomePage() {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -12,6 +112,15 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [galleryRoomId, setGalleryRoomId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState(0);
+
+  const revealSuites = useScrollReveal();
+  const revealBooking = useScrollReveal();
+  const revealTabs = useScrollReveal();
+  const revealTestimonials = useScrollReveal();
+  const revealTestimonialCards = useScrollReveal();
+  const revealAbout = useScrollReveal();
+  const revealAboutCards = useScrollReveal();
 
   const userCurrency = useMemo(() => {
     if (typeof navigator === "undefined") return "IDR";
@@ -40,152 +149,102 @@ export default function HomePage() {
   }, [userCurrency]);
 
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
-  const galleryRoom = galleryRoomId ? rooms.find((r) => r.id === galleryRoomId) : undefined;
+  const galleryRoom = galleryRoomId
+    ? rooms.find((r) => r.id === galleryRoomId)
+    : undefined;
 
   return (
-    <div id="top" className="container-page space-y-12 sm:space-y-16">
-      {/* Hero */}
-      <section className="relative pt-8 sm:pt-12">
-        <div className="flex flex-col gap-10 md:flex-row md:py-4">
-          <div className="flex-1 space-y-8 md:space-y-10">
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/50 backdrop-blur-lg px-3 py-1 text-xs font-medium text-slate-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              Now accepting reservations via your channel manager
-            </p>
-            <div className="space-y-4">
-              <h1 className="text-balance text-4xl font-semibold tracking-tight text-slate-800 sm:text-5xl lg:text-6xl">
-                A private apartment
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-400">
-                  with hotel-grade support.
-                </span>
-              </h1>
-              <p className="max-w-xl text-pretty text-sm sm:text-base text-slate-500">
-                CozyStay offers a curated pair of serviced apartments designed for business trips,
-                weekend escapes and longer stays. Real‑time availability, instant confirmation and
-                online check‑in, all synchronised with your channel manager.
-              </p>
-            </div>
+    <>
+      {/* ─── Hero ─── */}
+      <section className="relative isolate overflow-hidden">
+        {/* Background image */}
+        <div
+          className="absolute inset-0 -z-10 bg-cover bg-center hero-bg-animate"
+          style={{
+            backgroundImage:
+              "url('https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1600')",
+          }}
+        />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-white/60 via-transparent to-transparent" />
 
-            <div className="flex flex-wrap items-center gap-4">
-              <a
-                href="#booking"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white shadow-soft transition hover:from-sky-400 hover:to-indigo-400"
-              >
-                Reserve your stay
-                <span aria-hidden="true">→</span>
-              </a>
-              <a
-                href="#suites"
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200/60 bg-white/50 backdrop-blur-lg px-5 py-2.5 text-xs sm:text-sm font-medium text-slate-700 transition hover:bg-white/70"
-              >
-                View apartment types
-              </a>
-            </div>
-
-            <dl className="grid grid-cols-3 gap-4 max-w-md text-xs sm:text-sm text-slate-500">
-              <div>
-                <dt className="font-semibold text-slate-700">Average rating</dt>
-                <dd className="mt-1 flex items-center gap-1.5">
-                  <span className="text-base font-semibold text-slate-800">4.8</span>
-                  <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                    /5.0
-                  </span>
-                </dd>
-              </div>
-              <div>
-                <dt className="font-semibold text-slate-700">Check‑in</dt>
-                <dd className="mt-1 text-sm">From 3:00 PM</dd>
-              </div>
-              <div>
-                <dt className="font-semibold text-slate-700">Self check‑in</dt>
-                <dd className="mt-1 text-sm">Smart lock access</dd>
-              </div>
-            </dl>
-
-            {loading && <p className="text-sm text-slate-500">Loading rooms…</p>}
-            {error && (
-              <p className="text-sm text-red-400">
-                {error} Please try again later.
-              </p>
-            )}
+        <div className="container-page flex flex-col items-center justify-center text-center py-32 sm:py-44 lg:py-52 hero-animate">
+          <p className="text-xs font-medium uppercase tracking-[0.3em] text-accent mb-4">
+            CozyStay Collection
+          </p>
+          <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-gray-800 sm:text-5xl lg:text-6xl">
+            Redefining your stay
+          </h1>
+          <p className="mt-5 max-w-xl text-sm sm:text-base text-gray-500 leading-relaxed">
+            From urban apartments to serene villas, where hotel quality meets the
+            comfort of home.
+          </p>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <a
+              href="#booking"
+              className="glass-btn px-7 py-3"
+            >
+              Reserve your stay
+              <span aria-hidden="true" className="ml-2">→</span>
+            </a>
+            <a
+              href="#suites"
+              className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-medium text-gray-600 transition-all hover:-translate-y-0.5" style={{ background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.5)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)' }}
+            >
+              View properties
+            </a>
           </div>
 
-          {/* Hero media + booking card */}
-          <div className="flex-1 md:max-w-md lg:max-w-lg md:pl-4 lg:pl-8">
-            <div className="relative overflow-hidden rounded-3xl border border-white/50 bg-white/40 backdrop-blur-2xl p-4 shadow-glass-lg sm:p-5">
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[radial-gradient(circle_at_center,_rgba(147,197,253,0.3),_transparent_70%)]"
-              />
-              <div className="relative space-y-4">
-                <div className="overflow-hidden rounded-2xl border border-white/50 bg-[url('https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1200')] bg-cover bg-center">
-                  <div className="bg-gradient-to-t from-black/50 via-black/10 to-transparent p-4 sm:p-5 md:p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/80">
-                          CozyStay Collection
-                        </p>
-                        <p className="mt-1 text-lg font-semibold text-white">
-                          {selectedRoom?.name ?? "Select an apartment"}
-                        </p>
-                      </div>
-                      {selectedRoom && (
-                        <div className="rounded-xl bg-white/20 backdrop-blur-lg px-3 py-2 text-right text-xs text-white/80">
-                          from
-                          <p className="text-base font-semibold text-white">
-                            {selectedRoom.currency} {selectedRoom.pricePerNight.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                          </p>
-                          <p className="text-[10px] uppercase tracking-[0.18em]">
-                            per night
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div id="booking" className="relative">
-                  <BookingPanel
-                    rooms={rooms}
-                    selectedRoomId={selectedRoomId}
-                    onSelectRoom={setSelectedRoomId}
-                    onOpenGallery={(roomId) => setGalleryRoomId(roomId)}
-                    userCurrency={userCurrency}
-                  />
-                </div>
+          {/* Stats row */}
+          <div className="mt-16 glass rounded-2xl px-8 py-5 inline-flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+            <dl className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm text-gray-400">
+              <div className="text-center">
+                <AnimatedStat value="4.8" />
+                <dt className="mt-1 text-xs uppercase tracking-wider">Guest rating</dt>
               </div>
-            </div>
-            <p className="mt-3 text-[11px] text-slate-400">
-              Availability, rates and minimum-stay rules are synchronised with your
-              channel manager so you never get double bookings.
-            </p>
+              <div className="hidden sm:block h-8 w-px" style={{ background: 'rgba(0,0,0,0.08)' }} />
+              <div className="text-center">
+                <AnimatedStat value="2" />
+                <dt className="mt-1 text-xs uppercase tracking-wider">Properties</dt>
+              </div>
+              <div className="hidden sm:block h-8 w-px" style={{ background: 'rgba(0,0,0,0.08)' }} />
+              <div className="text-center">
+                <AnimatedStat value="24/7" />
+                <dt className="mt-1 text-xs uppercase tracking-wider">Support</dt>
+              </div>
+            </dl>
           </div>
         </div>
       </section>
 
-      {/* Signature suites / apartment types */}
-      <section
-        id="suites"
-        className="border-y border-slate-200/60 bg-white/30 backdrop-blur-xl rounded-3xl md:rounded-[2rem] overflow-hidden"
-      >
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 md:py-14 lg:px-8">
-          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+      {/* ─── Property cards ─── */}
+      <section id="suites" className="section-gap">
+        <div ref={revealSuites} className="container-page reveal">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-800">
+              <p className="text-xs font-medium uppercase tracking-[0.25em] text-accent mb-2">
+                Our properties
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-gray-800">
                 Signature apartments
               </h2>
-              <p className="mt-2 max-w-xl text-sm sm:text-base text-slate-500">
-                Each apartment is thoughtfully furnished with hotel‑grade bedding, a
-                fully equipped kitchen and fast Wi‑Fi. Choose the layout that matches
-                the way you travel.
+              <p className="mt-2 max-w-xl text-sm text-gray-500">
+                Each apartment is thoughtfully furnished with hotel-grade bedding, a
+                fully equipped kitchen and fast Wi-Fi.
               </p>
             </div>
-            <p className="text-xs sm:text-sm text-slate-400">
-              Instant confirmation when you book online.
+            <p className="text-xs text-gray-400">
+              Instant confirmation · Synced with channel manager
             </p>
           </div>
 
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
+          {loading && (
+            <p className="text-sm text-gray-400">Loading properties…</p>
+          )}
+          {error && (
+            <p className="text-sm text-red-400">{error} Please try again later.</p>
+          )}
+
+          <div className="grid gap-6 md:grid-cols-2">
             {rooms.map((room) => (
               <div
                 key={room.id}
@@ -202,38 +261,177 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Amenities summary (kept from previous version) */}
-      <section className="grid gap-8 lg:grid-cols-3 bg-white/40 border border-white/50 rounded-2xl p-5 sm:p-8 backdrop-blur-2xl">
-        <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-slate-700">
-            About CozyStay Apartments
-          </h2>
-          <p className="text-sm text-slate-500">
-            Located in the heart of the city, CozyStay is designed for business travellers,
-            digital nomads and families who want the comfort of an apartment with the
-            service standards of a boutique hotel.
-          </p>
+      {/* ─── Booking panel ─── */}
+      <section id="booking" className="section-gap">
+        <div ref={revealBooking} className="container-page max-w-2xl reveal">
+          <div className="text-center mb-8">
+            <p className="text-xs font-medium uppercase tracking-[0.25em] text-accent mb-2">
+              Reservation
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-gray-800">
+              Book your stay
+            </h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Secure booking with instant confirmation from our channel manager.
+            </p>
+          </div>
+          <BookingPanel
+            rooms={rooms}
+            selectedRoomId={selectedRoomId}
+            onSelectRoom={setSelectedRoomId}
+            onOpenGallery={(roomId) => setGalleryRoomId(roomId)}
+            userCurrency={userCurrency}
+          />
         </div>
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-slate-700">
-            What&apos;s included
-          </h3>
-          <ul className="text-sm text-slate-500 space-y-1">
-            <li>• High‑speed Wi‑Fi and dedicated workspace</li>
-            <li>• Fully equipped kitchen or kitchenette</li>
-            <li>• Weekly housekeeping and fresh linen</li>
-            <li>• Self check‑in with smart lock access</li>
-          </ul>
+      </section>
+
+      {/* ─── Experience the exceptional (tabbed section) ─── */}
+      <section className="section-gap">
+        <div ref={revealTabs} className="container-page reveal">
+          <div className="text-center mb-10">
+            <p className="text-xs font-medium uppercase tracking-[0.25em] text-accent mb-2">
+              Why CozyStay
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-gray-800">
+              Experience the exceptional
+            </h2>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-2 mb-8 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-center snap-x snap-mandatory sm:snap-none">
+            {TABS.map((tab, i) => (
+              <button
+                key={tab.label}
+                onClick={() => setActiveTab(i)}
+                className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-all whitespace-nowrap snap-start flex-shrink-0 sm:flex-shrink ${
+                  activeTab === i
+                    ? "glass-btn"
+                    : "text-gray-500 hover:text-gray-800"
+                }`}
+                style={activeTab !== i ? { background: 'rgba(255,255,255,0.4)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.5)' } : undefined}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Active tab content */}
+          <div key={activeTab} className="grid gap-8 md:grid-cols-2 items-center animate-tab-fade">
+            <div className="overflow-hidden rounded-2xl" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.4)' }}>
+              <img
+                src={TABS[activeTab].image}
+                alt={TABS[activeTab].label}
+                className="w-full h-64 sm:h-80 object-cover transition-transform duration-700 hover:scale-105"
+              />
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-gray-800">
+                {TABS[activeTab].title}
+              </h3>
+              <p className="text-sm leading-relaxed text-gray-500">
+                {TABS[activeTab].description}
+              </p>
+              <a
+                href="#booking"
+                className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent-light transition-colors group"
+              >
+                Book now <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
+              </a>
+            </div>
+          </div>
         </div>
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-slate-700">
-            Stay with confidence
-          </h3>
-          <p className="text-sm text-slate-500">
-            Your booking is managed through a professional channel manager used by major
-            travel sites. Availability is always up to date and your details are handled
-            securely end‑to‑end.
-          </p>
+      </section>
+
+      {/* ─── Testimonials ─── */}
+      <section className="section-gap">
+        <div ref={revealTestimonials} className="container-page reveal">
+          <div className="text-center mb-10">
+            <p className="text-xs font-medium uppercase tracking-[0.25em] text-accent mb-2">
+              Testimonials
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-gray-800">
+              What our guests say
+            </h2>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-3 reveal-children" ref={revealTestimonialCards}>
+            {TESTIMONIALS.map((t) => (
+              <div
+                key={t.name}
+                className="glass rounded-2xl p-6 flex flex-col star-animate"
+              >
+                <div className="flex gap-1 text-accent mb-4">
+                  {Array.from({ length: t.rating }).map((_, i) => (
+                    <svg
+                      key={i}
+                      className="h-4 w-4 fill-current star-icon"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-600 leading-relaxed flex-1">
+                  &ldquo;{t.text}&rdquo;
+                </p>
+                <div className="mt-5 pt-4 border-t" style={{ borderColor: 'rgba(0,0,0,0.06)' }}>
+                  <p className="text-sm font-medium text-gray-800">{t.name}</p>
+                  <p className="text-xs text-gray-400">{t.location}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── About / amenities ─── */}
+      <section className="section-gap">
+        <div ref={revealAbout} className="container-page reveal">
+          <div ref={revealAboutCards} className="grid gap-6 lg:grid-cols-3 reveal-children">
+            <div className="glass rounded-2xl p-6 space-y-3">
+              <h3 className="text-sm font-semibold text-gray-800">
+                About CozyStay
+              </h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Located in the heart of the city, CozyStay is designed for business
+                travellers, digital nomads and families who want the comfort of an
+                apartment with the service standards of a boutique hotel.
+              </p>
+            </div>
+            <div className="glass rounded-2xl p-6 space-y-3">
+              <h3 className="text-sm font-semibold text-gray-800">
+                What&apos;s included
+              </h3>
+              <ul className="text-sm text-gray-500 space-y-1.5">
+                <li className="flex items-center gap-2">
+                  <span className="h-1 w-1 rounded-full bg-accent flex-shrink-0" />
+                  High-speed Wi-Fi and dedicated workspace
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="h-1 w-1 rounded-full bg-accent flex-shrink-0" />
+                  Fully equipped kitchen or kitchenette
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="h-1 w-1 rounded-full bg-accent flex-shrink-0" />
+                  Weekly housekeeping and fresh linen
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="h-1 w-1 rounded-full bg-accent flex-shrink-0" />
+                  Self check-in with smart lock access
+                </li>
+              </ul>
+            </div>
+            <div className="glass rounded-2xl p-6 space-y-3">
+              <h3 className="text-sm font-semibold text-gray-800">
+                Stay with confidence
+              </h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Your booking is managed through a professional channel manager used
+                by major travel sites. Availability is always up to date and your
+                details are handled securely end-to-end.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -242,7 +440,7 @@ export default function HomePage() {
         open={!!galleryRoomId}
         onClose={() => setGalleryRoomId(null)}
       />
-    </div>
+    </>
   );
 }
 

@@ -44,10 +44,11 @@ const securityHeaders: Record<string, string> = {
   "X-Frame-Options": "DENY",
   "X-XSS-Protection": "1; mode=block",
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
 };
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Only apply to API routes
