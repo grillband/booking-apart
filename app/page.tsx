@@ -15,45 +15,13 @@ export default function HomePage() {
   useEffect(() => {
     async function loadRooms() {
       try {
-        // For GitHub Pages, use mock data directly since API routes don't work
-        const mockRooms = [
-          {
-            id: "studio-city",
-            name: "Bright Studio – City View",
-            description: "Elegant studio with kitchenette, balcony and skyline views. Perfect for business stays and city breaks.",
-            maxGuests: 2,
-            pricePerNight: 120,
-            currency: "USD",
-            imageUrl: "https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1200",
-            gallery: [
-              "https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1200",
-              "https://images.pexels.com/photos/1571450/pexels-photo-1571450.jpeg?auto=compress&cs=tinysrgb&w=1200",
-              "https://images.pexels.com/photos/1454806/pexels-photo-1454806.jpeg?auto=compress&cs=tinysrgb&w=1200"
-            ],
-            nextAvailableDate: "2026-03-18",
-            availableNights: 5
-          },
-          {
-            id: "family-suite",
-            name: "Family Suite – 2 Bedroom",
-            description: "Spacious two-bedroom apartment with full kitchen, ideal for families and longer stays.",
-            maxGuests: 4,
-            pricePerNight: 180,
-            currency: "USD",
-            imageUrl: "https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=1200",
-            gallery: [
-              "https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=1200",
-              "https://images.pexels.com/photos/276671/pexels-photo-276671.jpeg?auto=compress&cs=tinysrgb&w=1200",
-              "https://images.pexels.com/photos/271639/pexels-photo-271639.jpeg?auto=compress&cs=tinysrgb&w=1200"
-            ],
-            nextAvailableDate: "2026-03-19",
-            availableNights: 3
-          }
-        ];
-
-        setRooms(mockRooms);
-        if (mockRooms.length > 0) {
-          setSelectedRoomId(mockRooms[0].id);
+        const res = await fetch("/api/rooms");
+        if (!res.ok) throw new Error("Failed to load rooms");
+        const data = await res.json();
+        const fetchedRooms = data.rooms ?? [];
+        setRooms(fetchedRooms);
+        if (fetchedRooms.length > 0) {
+          setSelectedRoomId(fetchedRooms[0].id);
         }
       } catch (err: any) {
         setError(err.message || "Something went wrong.");

@@ -39,7 +39,7 @@ export function BookingPanel({
   const minCheckIn = today;
   const minCheckOut = checkIn ? addDays(checkIn, 1) : addDays(today, 1);
 
-  // Fetch dynamic pricing (client-side for GitHub Pages compatibility)
+  // Fetch dynamic pricing from API
   React.useEffect(() => {
     async function fetchPricing() {
       if (!selectedRoom || !checkIn || !checkOut) {
@@ -49,38 +49,17 @@ export function BookingPanel({
 
       setPricingLoading(true);
       try {
-        // For GitHub Pages, calculate pricing client-side since API routes don't work
-        const checkInDate = new Date(checkIn);
-        const checkOutDate = new Date(checkOut);
-        const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
-
-        // Dynamic pricing logic: weekends are 20% more expensive, peak season (summer) 15% more
-        let basePrice = selectedRoom.pricePerNight;
-        const dayOfWeek = checkInDate.getDay();
-        if (dayOfWeek === 0 || dayOfWeek === 6) { // Weekend
-          basePrice *= 1.2;
-        }
-        const month = checkInDate.getMonth();
-        if (month >= 5 && month <= 8) { // Summer months
-          basePrice *= 1.15;
-        }
-
-        // Add some randomness for demand-based pricing
-        const demandMultiplier = 0.9 + Math.random() * 0.2; // 0.9 to 1.1
-        basePrice *= demandMultiplier;
-
-        const totalPrice = Math.round(basePrice * nights);
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        setPricing({
-          pricePerNight: Math.round(basePrice),
-          totalPrice,
-          currency: selectedRoom.currency
+        const params = new URLSearchParams({
+          roomId: selectedRoom.id,
+          checkIn,
+          checkOut,
         });
+        const res = await fetch(`/api/pricing?${params}`);
+        if (!res.ok) throw new Error("Failed to fetch pricing");
+        const data = await res.json();
+        setPricing(data);
       } catch (error) {
-        console.error("Pricing calculation error:", error);
+        console.error("Pricing fetch error:", error);
         setPricing(null);
       } finally {
         setPricingLoading(false);
@@ -100,13 +79,24 @@ export function BookingPanel({
     setIsSubmitting(true);
     setMessage(null);
     try {
-      // For GitHub Pages, simulate booking without API call
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate processing
-
-      const confirmationCode = "CS" + Math.random().toString(36).slice(2, 7).toUpperCase();
+      const res = await fetch("/api/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomId: selectedRoom.id,
+          checkIn,
+          checkOut,
+          guests,
+          name,
+          email,
+          totalPrice: pricing?.totalPrice,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Unable to complete booking.");
 
       setMessage(
-        `Booking confirmed for ${pricing?.currency} ${pricing?.totalPrice.toFixed(0)}. Your confirmation code is ${confirmationCode}. (Note: This is a demo - no actual booking was made)`
+        `Booking confirmed for ${pricing?.currency} ${data.totalPrice}. Your confirmation code is ${data.confirmationCode}.`
       );
       setCheckIn("");
       setCheckOut("");
