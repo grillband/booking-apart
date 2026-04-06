@@ -32,7 +32,8 @@ export function BookingPanel({
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [pricing, setPricing] = useState<{ pricePerNight: number; totalPrice: number; currency: string } | null>(null);
@@ -89,7 +90,8 @@ export function BookingPanel({
           checkIn,
           checkOut,
           guests,
-          name,
+          firstName,
+          lastName,
           email,
           totalPrice: pricing?.totalPrice,
         }),
@@ -104,7 +106,8 @@ export function BookingPanel({
       setCheckOut("");
       setGuests(1);
       setEmail("");
-      setName("");
+      setFirstName("");
+      setLastName("");
       setPricing(null);
     } catch (error: any) {
       setMessage(error.message || "Something went wrong.");
@@ -210,17 +213,31 @@ export function BookingPanel({
           </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1.5">
-            Full name
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className={inputClass}
-            required
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">
+              First name
+            </label>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className={inputClass}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">
+              Last name
+            </label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className={inputClass}
+              required
+            />
+          </div>
         </div>
 
         <div>

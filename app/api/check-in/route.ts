@@ -1,22 +1,22 @@
-import { NextResponse } from "next/server";
+  import { NextResponse } from "next/server";
 import { completeOnlineCheckIn } from "@/lib/channelManager";
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
-      confirmationCode?: string;
+      reservationId?: string;
       lastName?: string;
     };
 
-    if (!body.confirmationCode || !body.lastName) {
+    if (!body.reservationId || !body.lastName) {
       return NextResponse.json(
-        { error: "Confirmation code and last name are required." },
+        { error: "Reservation ID and last name are required." },
         { status: 400 }
       );
     }
 
     const result = await completeOnlineCheckIn(
-      body.confirmationCode,
+      body.reservationId,
       body.lastName
     );
 
