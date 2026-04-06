@@ -103,6 +103,9 @@ export async function convertFromIDR(
 ): Promise<number> {
   if (targetCurrency === "IDR") return amountIDR;
 
+  // Only allow known currencies
+  if (!FALLBACK_RATES[targetCurrency]) return amountIDR;
+
   // Try live rates first
   const live = await fetchLiveRates();
   if (live && live[targetCurrency]) {
@@ -110,9 +113,7 @@ export async function convertFromIDR(
   }
 
   // Fallback to hardcoded
-  const rate = FALLBACK_RATES[targetCurrency];
-  if (!rate) return amountIDR;
-  return amountIDR * rate;
+  return amountIDR * FALLBACK_RATES[targetCurrency];
 }
 
 export function formatPrice(amount: number, currency: string): string {

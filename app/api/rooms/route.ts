@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchRoomsFromChannelManager } from "@/lib/channelManager";
 import { convertFromIDR } from "@/lib/currency";
+import { isValidCurrency } from "@/lib/validators";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,10 @@ export async function GET(request: NextRequest) {
   try {
     const rooms = await fetchRoomsFromChannelManager();
     const targetCurrency = new URL(request.url).searchParams.get("currency");
+
+    if (targetCurrency && !isValidCurrency(targetCurrency)) {
+      return NextResponse.json({ error: "Unsupported currency." }, { status: 400 });
+    }
 
     if (targetCurrency && targetCurrency !== "IDR") {
       const converted = await Promise.all(
@@ -25,8 +30,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ rooms });
   } catch (error: any) {
+    console.error("[ROOMS_ERROR]", error?.message);
     return NextResponse.json(
-      { error: error.message || "Failed to load rooms." },
+      { error: "Failed to load rooms. Please try again later." },
       { status: 500 }
     );
   }

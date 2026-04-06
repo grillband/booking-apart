@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRoomPricing } from "@/lib/channelManager";
 import { convertFromIDR, formatPrice } from "@/lib/currency";
+import { isValidRoomId, isValidDate, isDateRangeValid, isValidCurrency } from "@/lib/validators";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,11 +11,17 @@ export async function GET(request: NextRequest) {
     const checkOut = searchParams.get("checkOut");
     const targetCurrency = searchParams.get("currency");
 
-    if (!roomId || !checkIn || !checkOut) {
-      return NextResponse.json(
-        { error: "Missing required parameters: roomId, checkIn, checkOut" },
-        { status: 400 }
-      );
+    if (!isValidRoomId(roomId)) {
+      return NextResponse.json({ error: "Invalid room ID." }, { status: 400 });
+    }
+    if (!isValidDate(checkIn) || !isValidDate(checkOut)) {
+      return NextResponse.json({ error: "Invalid date format." }, { status: 400 });
+    }
+    if (!isDateRangeValid(checkIn, checkOut)) {
+      return NextResponse.json({ error: "Check-out must be after check-in." }, { status: 400 });
+    }
+    if (targetCurrency && !isValidCurrency(targetCurrency)) {
+      return NextResponse.json({ error: "Unsupported currency." }, { status: 400 });
     }
 
     const pricing = await getRoomPricing(roomId, checkIn, checkOut);
@@ -34,8 +41,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(pricing);
   } catch (error: any) {
+    console.error("[PRICING_ERROR]", error?.message);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch pricing." },
+      { error: "Failed to fetch pricing. Please try again later." },
       { status: 500 }
     );
   }
