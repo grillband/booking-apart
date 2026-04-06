@@ -44,13 +44,6 @@ export function Header() {
             <a href="/check-in" className="hover:text-gray-800 transition-colors">Check-in</a>
           </nav>
 
-          <a
-            href="#booking"
-            className="hidden md:inline-flex glass-btn px-5 py-2.5 text-sm"
-          >
-            Book now
-          </a>
-
           {/* Mobile hamburger */}
           <button
             type="button"
