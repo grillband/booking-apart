@@ -17,7 +17,7 @@ export function Header() {
 
   return (
     <>
-      <header className="relative border-b border-white/10 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/70 backdrop-blur">
         <div className="container-page flex items-center justify-between py-4 md:py-5">
           <a href="/" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-700 shadow-soft">
