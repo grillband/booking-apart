@@ -7,7 +7,7 @@ html {
 }
 
 body {
-  @apply bg-slate-950 text-slate-50 antialiased;
+  @apply bg-white text-slate-900 antialiased;
 }
 
 .container-page {
