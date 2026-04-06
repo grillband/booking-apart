@@ -9,32 +9,36 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: "#f5f5f3",
-          100: "#ece9e3",
-          200: "#d9d2c6",
-          300: "#c6bbaa",
-          400: "#a69177",
-          500: "#8c7457",
-          600: "#735b41",
-          700: "#5a4631",
-          800: "#3b2f20",
+          50: "#faf9f7",
+          100: "#f0ede8",
+          200: "#ddd7cd",
+          300: "#c4b9a8",
+          400: "#a6947a",
+          500: "#8a7460",
+          600: "#6e5a46",
+          700: "#564433",
+          800: "#3b2f22",
           900: "#231b13"
         },
-        primary: {
-          DEFAULT: "#0F766E",
-          soft: "#CCF0EC"
-        }
+        surface: {
+          DEFAULT: "#161616",
+          light: "#1e1e1e",
+          lighter: "#262626",
+        },
+        accent: {
+          DEFAULT: "#c8a97e",
+          light: "#dcc5a0",
+        },
       },
       fontFamily: {
-        sans: ["system-ui", "ui-sans-serif", "Inter", "sans-serif"]
+        sans: ["Inter", "system-ui", "ui-sans-serif", "sans-serif"]
       },
       boxShadow: {
-        soft: "0 8px 32px rgba(0, 0, 0, 0.08)",
-        glass: "0 8px 32px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255,255,255,0.8)",
-        "glass-lg": "0 16px 48px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255,255,255,0.9)"
+        card: "0 2px 20px rgba(0, 0, 0, 0.3)",
+        "card-hover": "0 8px 40px rgba(0, 0, 0, 0.5)",
       },
-      backdropBlur: {
-        '3xl': '64px'
+      borderRadius: {
+        '4xl': '2rem',
       }
     }
   },

@@ -34,54 +34,57 @@ export function CheckInForm() {
     }
   }
 
+  const inputClass =
+    "w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/60 transition";
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-6 bg-white/50 backdrop-blur-2xl rounded-2xl shadow-glass border border-white/60 p-4 sm:p-6 max-w-lg w-full"
+      className="mt-6 card-dark rounded-2xl p-5 sm:p-7 max-w-lg w-full"
     >
-      <h2 className="text-base sm:text-lg font-semibold text-slate-900">
+      <h2 className="text-base sm:text-lg font-semibold text-white">
         Online check-in
       </h2>
-      <p className="mt-1 text-xs sm:text-sm text-slate-600">
+      <p className="mt-1 text-xs sm:text-sm text-white/40">
         Use your booking confirmation code to check in before arrival.
       </p>
-      <div className="mt-4 space-y-3 text-sm">
+      <div className="mt-5 space-y-4 text-sm">
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">
+          <label className="block text-xs font-medium text-white/50 mb-1.5">
             Confirmation code
           </label>
           <input
             type="text"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            className="w-full rounded-xl border border-slate-200/80 bg-white/60 backdrop-blur-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400 tracking-[0.2em] uppercase"
+            className={`${inputClass} tracking-[0.2em] uppercase`}
             placeholder="e.g. CS7F92"
             required
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">
+          <label className="block text-xs font-medium text-white/50 mb-1.5">
             Last name
           </label>
           <input
             type="text"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="w-full rounded-xl border border-slate-200/80 bg-white/60 backdrop-blur-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+            className={inputClass}
             required
           />
         </div>
         {status && (
-          <p className="text-xs sm:text-sm text-primary mt-1 whitespace-pre-line">
+          <p className="text-xs sm:text-sm text-accent mt-1 whitespace-pre-line">
             {status}
           </p>
         )}
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full inline-flex justify-center items-center rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:from-sky-400 hover:to-indigo-400 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-400 transition-colors mt-1"
+          className="w-full inline-flex justify-center items-center rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-[#0a0a0a] hover:bg-accent-light disabled:opacity-40 disabled:cursor-not-allowed transition-colors mt-1"
         >
-          {isSubmitting ? "Checking in..." : "Check in now"}
+          {isSubmitting ? "Checking in…" : "Check in now"}
         </button>
       </div>
     </form>

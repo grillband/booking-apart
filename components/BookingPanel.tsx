@@ -41,7 +41,6 @@ export function BookingPanel({
   const minCheckIn = today;
   const minCheckOut = checkIn ? addDays(checkIn, 1) : addDays(today, 1);
 
-  // Fetch dynamic pricing from API
   React.useEffect(() => {
     async function fetchPricing() {
       if (!selectedRoom || !checkIn || !checkOut) {
@@ -114,18 +113,15 @@ export function BookingPanel({
     }
   }
 
+  const inputClass =
+    "w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/60 transition";
+
   return (
-    <section className="bg-white/50 backdrop-blur-2xl rounded-2xl shadow-glass border border-white/60 p-4 sm:p-6">
-      <h2 className="text-base sm:text-lg font-semibold text-slate-800">
-        Book your stay
-      </h2>
-      <p className="mt-1 text-xs sm:text-sm text-slate-500">
-        Secure online booking with instant confirmation from our channel manager.
-      </p>
-      <form onSubmit={handleSubmit} className="mt-4 space-y-3 text-sm">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div className="card-dark rounded-2xl p-5 sm:p-7">
+      <form onSubmit={handleSubmit} className="space-y-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">
+            <label className="block text-xs font-medium text-white/50 mb-1.5">
               Check-in
             </label>
             <input
@@ -138,19 +134,18 @@ export function BookingPanel({
                   setCheckIn("");
                   return;
                 }
-                const clamped =
-                  value < minCheckIn ? minCheckIn : value;
+                const clamped = value < minCheckIn ? minCheckIn : value;
                 setCheckIn(clamped);
                 if (checkOut && checkOut <= clamped) {
                   setCheckOut(addDays(clamped, 1));
                 }
               }}
-              className="w-full rounded-xl border border-slate-200/80 bg-white/60 backdrop-blur-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+              className={inputClass}
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">
+            <label className="block text-xs font-medium text-white/50 mb-1.5">
               Check-out
             </label>
             <input
@@ -163,18 +158,18 @@ export function BookingPanel({
                   setCheckOut("");
                   return;
                 }
-                const clamped =
-                  value < minCheckOut ? minCheckOut : value;
+                const clamped = value < minCheckOut ? minCheckOut : value;
                 setCheckOut(clamped);
               }}
-              className="w-full rounded-xl border border-slate-200/80 bg-white/60 backdrop-blur-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+              className={inputClass}
               required
             />
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">
+            <label className="block text-xs font-medium text-white/50 mb-1.5">
               Guests
             </label>
             <input
@@ -183,21 +178,21 @@ export function BookingPanel({
               max={selectedRoom?.maxGuests ?? 8}
               value={guests}
               onChange={(e) => setGuests(Number(e.target.value))}
-              className="w-full rounded-xl border border-slate-200/80 bg-white/60 backdrop-blur-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+              className={inputClass}
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">
-              Apartment
+            <label className="block text-xs font-medium text-white/50 mb-1.5">
+              Property
             </label>
             <select
               value={selectedRoomId ?? ""}
               onChange={(e) => onSelectRoom(e.target.value)}
-              className="w-full rounded-xl border border-slate-200/80 bg-white/60 backdrop-blur-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+              className={inputClass}
             >
               <option value="" disabled>
-                Select an apartment
+                Select a property
               </option>
               {rooms.map((room) => (
                 <option key={room.id} value={room.id}>
@@ -209,65 +204,87 @@ export function BookingPanel({
               type="button"
               disabled={!selectedRoomId}
               onClick={() => selectedRoomId && onOpenGallery(selectedRoomId)}
-              className="mt-1 inline-flex items-center gap-1 text-[11px] text-sky-600 hover:text-sky-700 disabled:text-slate-300 disabled:cursor-not-allowed"
+              className="mt-1.5 inline-flex items-center gap-1 text-xs text-accent hover:text-accent-light disabled:text-white/20 disabled:cursor-not-allowed transition-colors"
             >
-              <span>View photos</span>
+              View photos
             </button>
           </div>
         </div>
+
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">
+          <label className="block text-xs font-medium text-white/50 mb-1.5">
             Full name
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-xl border border-slate-200/80 bg-white/60 backdrop-blur-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+            className={inputClass}
             required
           />
         </div>
+
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">
+          <label className="block text-xs font-medium text-white/50 mb-1.5">
             Email
           </label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-slate-200/80 bg-white/60 backdrop-blur-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+            className={inputClass}
             required
           />
         </div>
+
         {message && (
-          <p className="text-xs sm:text-sm text-emerald-600 mt-1">{message}</p>
+          <p className="text-xs sm:text-sm text-accent mt-1">{message}</p>
         )}
+
         {pricing && (
-          <div className="bg-white/40 backdrop-blur-lg rounded-xl p-3 border border-white/50">
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-500">
-                {pricingLoading ? "Calculating..." : `Dynamic pricing from channel manager`}
+              <span className="text-white/40">
+                {pricingLoading ? "Calculating…" : "Channel manager pricing"}
               </span>
-              <span className="font-semibold text-slate-800">
-                Total: {pricing.currency} {pricing.totalPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              <span className="font-semibold text-white">
+                Total: {pricing.currency}{" "}
+                {pricing.totalPrice.toLocaleString(undefined, {
+                  maximumFractionDigits: 0,
+                })}
               </span>
             </div>
             {!pricingLoading && (
-              <div className="text-xs text-slate-400 mt-1">
-                {pricing.currency} {pricing.pricePerNight.toLocaleString(undefined, { maximumFractionDigits: 0 })}/night × {Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24))} nights
+              <div className="text-xs text-white/30 mt-1">
+                {pricing.currency}{" "}
+                {pricing.pricePerNight.toLocaleString(undefined, {
+                  maximumFractionDigits: 0,
+                })}
+                /night ×{" "}
+                {Math.ceil(
+                  (new Date(checkOut).getTime() -
+                    new Date(checkIn).getTime()) /
+                    (1000 * 60 * 60 * 24)
+                )}{" "}
+                nights
               </div>
             )}
           </div>
         )}
+
         <button
           type="submit"
           disabled={isSubmitting || !pricing || pricingLoading}
-          className="w-full inline-flex justify-center items-center rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:from-sky-400 hover:to-indigo-400 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-400 focus-visible:ring-offset-white transition-colors mt-2"
+          className="w-full inline-flex justify-center items-center rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-[#0a0a0a] hover:bg-accent-light disabled:opacity-40 disabled:cursor-not-allowed transition-colors mt-1"
         >
-          {isSubmitting ? "Processing..." : pricingLoading ? "Getting price..." : "Confirm booking"}
+          {isSubmitting
+            ? "Processing…"
+            : pricingLoading
+            ? "Getting price…"
+            : "Confirm booking"}
         </button>
       </form>
-    </section>
+    </div>
   );
 }
 
