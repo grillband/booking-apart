@@ -112,11 +112,11 @@ export function BookingPanel({
   }
 
   return (
-    <section className="bg-slate-900/80 backdrop-blur rounded-2xl shadow-[0_18px_40px_rgba(0,0,0,0.6)] border border-white/10 p-4 sm:p-6">
-      <h2 className="text-base sm:text-lg font-semibold text-slate-50">
+    <section className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-slate-200 p-4 sm:p-6">
+      <h2 className="text-base sm:text-lg font-semibold text-slate-900">
         Book your stay
       </h2>
-      <p className="mt-1 text-xs sm:text-sm text-slate-300">
+      <p className="mt-1 text-xs sm:text-sm text-slate-500">
         Secure online booking with instant confirmation from our channel manager.
       </p>
       <form onSubmit={handleSubmit} className="mt-4 space-y-3 text-sm">
@@ -142,7 +142,7 @@ export function BookingPanel({
                   setCheckOut(addDays(clamped, 1));
                 }
               }}
-              className="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400/40 focus:border-brand-400"
               required
             />
           </div>
@@ -164,7 +164,7 @@ export function BookingPanel({
                   value < minCheckOut ? minCheckOut : value;
                 setCheckOut(clamped);
               }}
-              className="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400/40 focus:border-brand-400"
               required
             />
           </div>
@@ -180,7 +180,7 @@ export function BookingPanel({
               max={selectedRoom?.maxGuests ?? 8}
               value={guests}
               onChange={(e) => setGuests(Number(e.target.value))}
-              className="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400/40 focus:border-brand-400"
               required
             />
           </div>
@@ -191,7 +191,7 @@ export function BookingPanel({
             <select
               value={selectedRoomId ?? ""}
               onChange={(e) => onSelectRoom(e.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-400/40 focus:border-brand-400"
             >
               <option value="" disabled>
                 Select an apartment
@@ -206,7 +206,7 @@ export function BookingPanel({
               type="button"
               disabled={!selectedRoomId}
               onClick={() => selectedRoomId && onOpenGallery(selectedRoomId)}
-              className="mt-1 inline-flex items-center gap-1 text-[11px] text-brand-200 hover:text-brand-100 disabled:text-slate-600 disabled:cursor-not-allowed"
+              className="mt-1 inline-flex items-center gap-1 text-[11px] text-brand-500 hover:text-brand-600 disabled:text-slate-400 disabled:cursor-not-allowed"
             >
               <span>View photos</span>
             </button>
@@ -220,7 +220,7 @@ export function BookingPanel({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400/40 focus:border-brand-400"
             required
           />
         </div>
@@ -232,25 +232,25 @@ export function BookingPanel({
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400/40 focus:border-brand-400"
             required
           />
         </div>
         {message && (
-          <p className="text-xs sm:text-sm text-emerald-300 mt-1">{message}</p>
+          <p className="text-xs sm:text-sm text-emerald-600 mt-1">{message}</p>
         )}
         {pricing && (
-          <div className="bg-slate-800/60 rounded-lg p-3 border border-white/10">
+          <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-300">
+              <span className="text-slate-600">
                 {pricingLoading ? "Calculating..." : `Dynamic pricing from channel manager`}
               </span>
-              <span className="font-semibold text-white">
+              <span className="font-semibold text-slate-900">
                 Total: {pricing.currency} {pricing.totalPrice.toFixed(0)}
               </span>
             </div>
             {!pricingLoading && (
-              <div className="text-xs text-slate-400 mt-1">
+              <div className="text-xs text-slate-500 mt-1">
                 {pricing.currency} {pricing.pricePerNight.toFixed(0)}/night × {Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24))} nights
               </div>
             )}
@@ -259,7 +259,7 @@ export function BookingPanel({
         <button
           type="submit"
           disabled={isSubmitting || !pricing || pricingLoading}
-          className="w-full inline-flex justify-center items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/40 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary focus-visible:ring-offset-slate-950 transition-colors mt-2"
+          className="w-full inline-flex justify-center items-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-400 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-400 transition-colors mt-2"
         >
           {isSubmitting ? "Processing..." : pricingLoading ? "Getting price..." : "Confirm booking"}
         </button>
